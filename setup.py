@@ -2,7 +2,7 @@ import os
 import re
 from setuptools import find_packages, setup  # type: ignore
 
-from pkg_resources import DistributionNotFound, get_distribution
+from importlib.metadata import PackageNotFoundError, version
 
 
 def readme():
@@ -15,21 +15,19 @@ version_file = 'mmengine/version.py'
 
 
 def choose_requirement(primary, secondary):
-    """If some version of primary requirement installed, return primary, else
-    return secondary."""
     try:
         name = re.split(r'[!<>=]', primary)[0]
-        get_distribution(name)
-    except DistributionNotFound:
+        version(name)
+    except PackageNotFoundError:
         return secondary
-
     return str(primary)
 
 
 def get_version():
-    with open(version_file) as f:
-        exec(compile(f.read(), version_file, 'exec'))
-    return locals()['__version__']
+    version_ns = {}
+    with open(version_file, encoding='utf-8') as f:
+        exec(compile(f.read(), version_file, 'exec'), {}, version_ns)
+    return version_ns['__version__']
 
 
 def parse_requirements(fname='requirements/runtime.txt', with_version=True):
